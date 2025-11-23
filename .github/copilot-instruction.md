@@ -4,14 +4,19 @@
 You are assisting in building Solidity smart contracts for an export-import funding platform using Foundry as the development and testing framework.
 
 The platform allows:
-- Importers to create purchase contracts (requests) off-chain.
-- Exporters to submit offers for contracts.
-- Importers to approve offers, triggering NFT minting representing approved contracts.
-- Admins to bundle approved contracts into pools.
-- Investors to invest in pools; investments are proportionally split across contracts within each pool.
-- Escrowed payment handling with automatic release to exporters upon contract fulfillment.
-- Refund mechanisms for canceled or unfulfilled contracts.
-- Role-based access control with the roles: Admin, Importer, Exporter, Investor.
+- Exporters to submit invoices/export receivables to the platform.
+- Invoices are converted to NFTs (minting cost charged to exporter).
+- Invoices are also converted to payment links for importers.
+- Platform/Investment Manager groups NFTs with certain criteria into pools.
+- Total pool funding = total funding requests from exporters in that pool.
+- Investors can view various pools and invest in desired pools (full or partial).
+- When pool needs are met (100%), no more investments allowed.
+- When pool reaches 70% funding, pool becomes eligible for withdrawal.
+- Exporters can withdraw funds at 70% (manual trigger) or wait for 100% (auto-disbursement).
+- Importers receive payment reminders via automated billing.
+- When importers make payments, pool balance/status updates.
+- When all importers have paid (100%), system allocates funds: Platform fee 1% + Investors (100% loan + 4% yield) + remainder to exporters.
+- Role-based access control with the roles: Admin, Investment Manager, Exporter, Investor, Importer.
 
 ## Coding Guidelines
 - Use Solidity stable versions (e.g., ^0.8.20).
@@ -46,19 +51,19 @@ The platform allows:
 
 ## Project Layout
 /src
-	•	ContractNFT.sol
+	•	InvoiceNFT.sol
 	•	PoolManager.sol
 	•	InvestmentPool.sol
-	•	EscrowPayment.sol
+	•	PaymentEscrow.sol
 	•	AccessControl.sol
-	•	FulfillmentOracle.sol
+	•	PaymentOracle.sol
 /test
-	•	ContractNFT.t.sol
+	•	InvoiceNFT.t.sol
 	•	PoolManager.t.sol
 	•	InvestmentPool.t.sol
-	•	EscrowPayment.t.sol
+	•	PaymentEscrow.t.sol
 	•	AccessControl.t.sol
-	•	FulfillmentOracle.t.sol
+	•	PaymentOracle.t.sol
 /scripts
 	•	Deploy.s.sol
     •   foundry.toml

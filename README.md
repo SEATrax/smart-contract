@@ -65,16 +65,16 @@ forge build
 │   └── implementation-checklist.md  # Phase-by-phase implementation plan
 ├── src/                        # Solidity smart contracts
 │   ├── AccessControl.sol       # Role-based access control
-│   ├── ContractNFT.sol        # ERC-721 trade contract tokens
-│   ├── EscrowPayment.sol      # Payment escrow management
-│   ├── FulfillmentOracle.sol  # Contract completion verification
+│   ├── InvoiceNFT.sol         # ERC-721 invoice/receivable tokens
+│   ├── PaymentEscrow.sol      # Payment escrow management
+│   ├── PaymentOracle.sol      # Payment verification and billing
 │   ├── InvestmentPool.sol     # Individual pool management
 │   └── PoolManager.sol        # Pool creation and bundling
 ├── test/                       # Foundry test files
 │   ├── AccessControl.t.sol
-│   ├── ContractNFT.t.sol
-│   ├── EscrowPayment.t.sol
-│   ├── FulfillmentOracle.t.sol
+│   ├── InvoiceNFT.t.sol
+│   ├── PaymentEscrow.t.sol
+│   ├── PaymentOracle.t.sol
 │   ├── InvestmentPool.t.sol
 │   └── PoolManager.t.sol
 ├── script/                     # Deployment scripts
@@ -184,21 +184,24 @@ The `foundry.toml` file contains project-specific settings:
 
 ### Core Contracts
 
-1. **AccessControl**: Manages role-based permissions
-2. **ContractNFT**: ERC-721 implementation for trade contracts
+1. **AccessControl**: Manages role-based permissions (Admin, Investment Manager, Exporter, Investor, Importer)
+2. **InvoiceNFT**: ERC-721 implementation for invoice/receivable tokens
 3. **PoolManager**: Creates and manages investment pools
-4. **InvestmentPool**: Handles individual pool investments
-5. **EscrowPayment**: Manages payment escrow and releases
-6. **FulfillmentOracle**: Verifies contract completion
+4. **InvestmentPool**: Handles individual pool investments with 70%/100% funding thresholds
+5. **PaymentEscrow**: Manages payment escrow and automated distribution
+6. **PaymentOracle**: Verifies importer payments and triggers billing
 
 ### Workflow
 
-1. **Importers** create purchase requests off-chain
-2. **Exporters** submit offers for contracts
-3. **Importers** approve offers → NFT minted
-4. **Admins** bundle contracts into pools
-5. **Investors** invest in pools
-6. **Oracle** verifies fulfillment → payments released
+1. **Exporters** submit invoices/receivables to platform
+2. **System** mints NFT for each invoice (minting fee charged to exporter)
+3. **System** generates payment links for importers
+4. **Investment Manager** groups NFTs into pools by criteria
+5. **Investors** invest in pools (partial or full)
+6. **Pool becomes eligible** at 70% funding (manual withdrawal) or 100% (auto-disbursement)
+7. **Importers** receive automated payment reminders
+8. **Payments update** pool balance and status
+9. **Funds distributed** when all importers pay: Platform 1% + Investors 104% + Exporters remainder
 
 ## Testing Strategy
 

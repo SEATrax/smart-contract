@@ -11,7 +11,7 @@
 ## Phase 2: Access Control System
 - [ ] Design role-based access control architecture
 - [ ] Implement `AccessControl.sol` contract
-  - [ ] Define roles: Admin, Importer, Exporter, Investor
+  - [ ] Define roles: Admin, Investment Manager, Exporter, Investor, Importer
   - [ ] Implement role assignment/revocation functions
   - [ ] Create role-based modifiers
   - [ ] Add admin management functions
@@ -22,67 +22,78 @@
   - [ ] Test admin transfer functionality
 - [ ] Security audit of access control implementation
 
-## Phase 3: Contract NFT System
-- [ ] Implement `ContractNFT.sol` (ERC-721)
-  - [ ] Define contract metadata structure
-  - [ ] Implement minting functionality (importer approval)
-  - [ ] Add contract status tracking (pending, active, fulfilled, canceled)
-  - [ ] Implement contract data storage and retrieval
-  - [ ] Add contract lifecycle management
-- [ ] Write comprehensive tests for `ContractNFT.t.sol`
-  - [ ] Test NFT minting process
+## Phase 3: Invoice NFT System
+- [ ] Implement `InvoiceNFT.sol` (ERC-721)
+  - [ ] Define invoice metadata structure (amount, due date, exporter, importer)
+  - [ ] Implement minting functionality (exporter submission with minting fee)
+  - [ ] Add invoice status tracking (pending, pooled, funded, paid, defaulted)
+  - [ ] Implement payment link generation for importers
+  - [ ] Add funding request amount tracking
+  - [ ] Implement invoice lifecycle management
+- [ ] Write comprehensive tests for `InvoiceNFT.t.sol`
+  - [ ] Test NFT minting with fee payment
   - [ ] Test metadata management
   - [ ] Test status transitions
+  - [ ] Test payment link functionality
   - [ ] Test access control integration
   - [ ] Test edge cases and error conditions
 - [ ] Integration testing with AccessControl
 
 ## Phase 4: Investment Pool Architecture
 - [ ] Implement `InvestmentPool.sol`
-  - [ ] Design pool data structures
+  - [ ] Design pool data structures for invoice grouping
   - [ ] Implement investment tracking (nested mappings)
   - [ ] Add investor contribution recording
-  - [ ] Implement pool state management
-  - [ ] Add investment withdrawal mechanisms
+  - [ ] Implement 70%/100% funding thresholds
+  - [ ] Add withdrawal eligibility at 70% funding
+  - [ ] Implement manual vs automatic disbursement (70% vs 100%)
+  - [ ] Add pool state management (funding, eligible, completed)
 - [ ] Implement `PoolManager.sol`
-  - [ ] Pool creation and management
-  - [ ] Contract bundling into pools
+  - [ ] Pool creation by Investment Manager
+  - [ ] Invoice bundling into pools with criteria
   - [ ] Pool lifecycle management
-  - [ ] Admin functions for pool operations
+  - [ ] Investment Manager functions for pool operations
 - [ ] Write comprehensive tests
   - [ ] `InvestmentPool.t.sol` - Test investment logic
   - [ ] `PoolManager.t.sol` - Test pool management
+  - [ ] Test 70%/100% threshold mechanics
+  - [ ] Test withdrawal eligibility and disbursement
   - [ ] Test proportional investment calculations
   - [ ] Test pool state transitions
-  - [ ] Integration tests between pools and NFTs
+  - [ ] Integration tests between pools and invoice NFTs
 - [ ] Security review of investment logic
 
-## Phase 5: Escrow Payment System
-- [ ] Implement `EscrowPayment.sol`
-  - [ ] Payment deposit functionality
-  - [ ] Escrow state management
-  - [ ] Payment release mechanisms
-  - [ ] Refund functionality
-  - [ ] Integration with pool investments
-- [ ] Write comprehensive tests for `EscrowPayment.t.sol`
-  - [ ] Test payment deposits
-  - [ ] Test escrow release conditions
-  - [ ] Test refund mechanisms
+## Phase 5: Payment Escrow System
+- [ ] Implement `PaymentEscrow.sol`
+  - [ ] Importer payment deposit functionality
+  - [ ] Escrow state management per invoice
+  - [ ] Payment allocation logic (Platform 1% + Investors 104% + Exporters remainder)
+  - [ ] Pool balance update mechanisms
+  - [ ] Automated payment distribution when pool reaches 100%
+  - [ ] Integration with pool investments and invoice tracking
+- [ ] Write comprehensive tests for `PaymentEscrow.t.sol`
+  - [ ] Test importer payment deposits
+  - [ ] Test payment allocation calculations
+  - [ ] Test pool balance updates
+  - [ ] Test automated distribution at 100%
+  - [ ] Test fee distribution (1% platform, 4% yield)
   - [ ] Test integration with investment pools
   - [ ] Test reentrancy protection
 - [ ] Security audit of payment handling
 
-## Phase 6: Fulfillment Oracle
-- [ ] Implement `FulfillmentOracle.sol`
-  - [ ] Oracle data feed integration
-  - [ ] Contract fulfillment verification
-  - [ ] Automated payment trigger system
+## Phase 6: Payment Oracle
+- [ ] Implement `PaymentOracle.sol`
+  - [ ] Oracle data feed integration for payment verification
+  - [ ] Importer payment status tracking
+  - [ ] Automated billing reminder system
+  - [ ] Payment confirmation and pool status updates
   - [ ] Oracle admin controls
-  - [ ] Fallback mechanisms
-- [ ] Write comprehensive tests for `FulfillmentOracle.t.sol`
-  - [ ] Test oracle data updates
-  - [ ] Test fulfillment verification
-  - [ ] Test automated payment triggers
+  - [ ] Fallback mechanisms for manual verification
+- [ ] Write comprehensive tests for `PaymentOracle.t.sol`
+  - [ ] Test oracle payment verification
+  - [ ] Test billing reminder triggers
+  - [ ] Test payment status updates
+  - [ ] Test pool balance synchronization
   - [ ] Test oracle failure scenarios
   - [ ] Integration tests with escrow system
 
