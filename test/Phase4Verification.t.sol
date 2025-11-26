@@ -1,8 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.30;
 
-import "forge-std/Test.sol";
-import "forge-std/console2.sol";
+import {Test, console2} from "forge-std/Test.sol";
 
 import {PlatformAccessControl} from "../src/AccessControl.sol";
 import {InvoiceNFT} from "../src/InvoiceNFT.sol";

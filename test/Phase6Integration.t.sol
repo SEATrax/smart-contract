@@ -1,13 +1,12 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.30;
 
-import "forge-std/Test.sol";
-import "forge-std/console2.sol";
-import "../src/AccessControl.sol";
-import "../src/InvoiceNFT.sol";
-import "../src/PoolNFT.sol";
-import "../src/PoolFundingManager.sol";
-import "../src/PaymentOracle.sol";
+import {Test, console2} from "forge-std/Test.sol";
+import {PlatformAccessControl} from "../src/AccessControl.sol";
+import {InvoiceNFT} from "../src/InvoiceNFT.sol";
+import {PoolNFT} from "../src/PoolNFT.sol";
+import {PoolFundingManager} from "../src/PoolFundingManager.sol";
+import {PaymentOracle} from "../src/PaymentOracle.sol";
 
 /**
  * @title Phase6Integration
@@ -192,28 +191,12 @@ contract Phase6IntegrationTest is Test {
         console2.log("[OK] Pool automatically transitioned to Settlement");
         
         // Step 7: Verify all invoices marked as paid
-        InvoiceNFT.Invoice memory paidInv1 = invoiceNft.getInvoice(invoice1);
-        InvoiceNFT.Invoice memory paidInv2 = invoiceNft.getInvoice(invoice2);
-        InvoiceNFT.Invoice memory paidInv3 = invoiceNft.getInvoice(invoice3);
-        
-        assertEq(uint8(paidInv1.status), uint8(InvoiceNFT.InvoiceStatus.Paid));
-        assertEq(uint8(paidInv2.status), uint8(InvoiceNFT.InvoiceStatus.Paid));
-        assertEq(uint8(paidInv3.status), uint8(InvoiceNFT.InvoiceStatus.Paid));
+        _verifyInvoicesPaid(invoice1, invoice2, invoice3);
         
         console2.log("[OK] All invoices marked as paid");
         
         // Step 8: Verify payment records
-        PaymentOracle.PaymentRecord memory record1 = paymentOracle.getPaymentRecord(invoice1);
-        PaymentOracle.PaymentRecord memory record2 = paymentOracle.getPaymentRecord(invoice2);
-        PaymentOracle.PaymentRecord memory record3 = paymentOracle.getPaymentRecord(invoice3);
-        
-        assertTrue(record1.isConfirmed);
-        assertTrue(record2.isConfirmed);
-        assertTrue(record3.isConfirmed);
-        
-        assertEq(record1.amountPaid, 50000e18);
-        assertEq(record2.amountPaid, 30000e18);
-        assertEq(record3.amountPaid, 40000e18);
+        _verifyPaymentRecords(invoice1, invoice2, invoice3);
         
         console2.log("[OK] Payment records properly stored");
         
@@ -223,11 +206,42 @@ contract Phase6IntegrationTest is Test {
         
         console2.log("[OK] Investor investments tracked through settlement");
         
-        console2.log("✅ Phase 6 Integration Test COMPLETED SUCCESSFULLY");
-        console2.log("✅ Payment Oracle System: WORKING");
-        console2.log("✅ Automated Settlement: WORKING");
-        console2.log("✅ Multi-Oracle Confirmation: WORKING");
-        console2.log("✅ Cross-Contract Integration: WORKING");
+        console2.log("[SUCCESS] Phase 6 Integration Test COMPLETED SUCCESSFULLY");
+        console2.log("[SUCCESS] Payment Oracle System: WORKING");
+        console2.log("[SUCCESS] Automated Settlement: WORKING");
+        console2.log("[SUCCESS] Multi-Oracle Confirmation: WORKING");
+        console2.log("[SUCCESS] Cross-Contract Integration: WORKING");
+    }
+
+    /**
+     * @notice Helper function to verify invoices are marked as paid
+     */
+    function _verifyInvoicesPaid(uint256 invoice1, uint256 invoice2, uint256 invoice3) internal view {
+        InvoiceNFT.Invoice memory paidInv1 = invoiceNft.getInvoice(invoice1);
+        assertEq(uint8(paidInv1.status), uint8(InvoiceNFT.InvoiceStatus.Paid));
+        
+        InvoiceNFT.Invoice memory paidInv2 = invoiceNft.getInvoice(invoice2);
+        assertEq(uint8(paidInv2.status), uint8(InvoiceNFT.InvoiceStatus.Paid));
+        
+        InvoiceNFT.Invoice memory paidInv3 = invoiceNft.getInvoice(invoice3);
+        assertEq(uint8(paidInv3.status), uint8(InvoiceNFT.InvoiceStatus.Paid));
+    }
+
+    /**
+     * @notice Helper function to verify payment records
+     */
+    function _verifyPaymentRecords(uint256 invoice1, uint256 invoice2, uint256 invoice3) internal view {
+        PaymentOracle.PaymentRecord memory record1 = paymentOracle.getPaymentRecord(invoice1);
+        assertTrue(record1.isConfirmed);
+        assertEq(record1.amountPaid, 50000e18);
+        
+        PaymentOracle.PaymentRecord memory record2 = paymentOracle.getPaymentRecord(invoice2);
+        assertTrue(record2.isConfirmed);
+        assertEq(record2.amountPaid, 30000e18);
+        
+        PaymentOracle.PaymentRecord memory record3 = paymentOracle.getPaymentRecord(invoice3);
+        assertTrue(record3.isConfirmed);
+        assertEq(record3.amountPaid, 40000e18);
     }
 
     /**
@@ -276,7 +290,7 @@ contract Phase6IntegrationTest is Test {
         
         vm.stopPrank();
         
-        console2.log("✅ Manual Settlement Test COMPLETED SUCCESSFULLY");
+        console2.log("[SUCCESS] Manual Settlement Test COMPLETED SUCCESSFULLY");
     }
 
     /**
@@ -335,6 +349,6 @@ contract Phase6IntegrationTest is Test {
         
         vm.stopPrank();
         
-        console2.log("✅ Payment Dispute Test COMPLETED SUCCESSFULLY");
+        console2.log("[SUCCESS] Payment Dispute Test COMPLETED SUCCESSFULLY");
     }
 }

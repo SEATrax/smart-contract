@@ -354,7 +354,11 @@ contract PoolNFT is ERC721Enumerable {
         
         // Update pool totals
         unchecked {
+            // casting to 'uint88' is safe because additional loan amounts are controlled and validated
+            // forge-lint: disable-next-line(unsafe-typecast)
             pool.totalLoanAmount += uint88(additionalLoan);
+            // casting to 'uint128' is safe because additional shipping amounts are controlled and validated
+            // forge-lint: disable-next-line(unsafe-typecast)
             pool.totalShippingAmount += uint128(additionalShipping);
             pool.invoiceCount += uint8(invoiceIds.length);
             totalPoolValue += additionalLoan;

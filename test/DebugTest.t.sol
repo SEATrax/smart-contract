@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.30;
 
-import "forge-std/Test.sol";
+import {Test, console} from "forge-std/Test.sol";
 
 contract DebugTest is Test {
-    function testArithmeticCalculation() public {
+    function testArithmeticCalculation() public pure {
         uint256 totalInvestment = 140e18; // 140 ETH
         uint256 totalLoanAmount = 160e18;  // 160 ETH
         

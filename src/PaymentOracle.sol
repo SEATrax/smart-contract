@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.30;
 
-import "./AccessControl.sol";
-import "./InvoiceNFT.sol";
-import "./PoolNFT.sol";
-import "./PoolFundingManager.sol";
+import {PlatformAccessControl} from "./AccessControl.sol";
+import {InvoiceNFT} from "./InvoiceNFT.sol";
+import {PoolNFT} from "./PoolNFT.sol";
+import {PoolFundingManager} from "./PoolFundingManager.sol";
 
 /**
  * @title PaymentOracle
@@ -142,31 +142,47 @@ contract PaymentOracle {
     // ================================
 
     modifier onlyAdmin() {
+        _onlyAdmin();
+        _;
+    }
+
+    function _onlyAdmin() internal view {
         if (!ACCESS_CONTROL.isAdmin(msg.sender)) {
             revert NotAdmin(msg.sender);
         }
-        _;
     }
 
     modifier onlyAuthorizedOracle() {
+        _onlyAuthorizedOracle();
+        _;
+    }
+
+    function _onlyAuthorizedOracle() internal view {
         if (!authorizedOracles[msg.sender]) {
             revert NotAuthorizedOracle(msg.sender);
         }
-        _;
     }
 
     modifier validInvoiceId(uint256 invoiceId) {
-        if (invoiceId == 0 || invoiceId > INVOICE_NFT.totalSupply()) {
-            revert InvalidInvoiceId(invoiceId);
-        }
+        _validInvoiceId(invoiceId);
         _;
     }
 
+    function _validInvoiceId(uint256 invoiceId) internal view {
+        if (invoiceId == 0 || invoiceId > INVOICE_NFT.totalSupply()) {
+            revert InvalidInvoiceId(invoiceId);
+        }
+    }
+
     modifier validPoolId(uint256 poolId) {
+        _validPoolId(poolId);
+        _;
+    }
+
+    function _validPoolId(uint256 poolId) internal view {
         if (poolId == 0 || poolId > POOL_NFT.totalSupply()) {
             revert InvalidPoolId(poolId);
         }
-        _;
     }
 
     // ================================

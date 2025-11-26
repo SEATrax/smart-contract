@@ -101,37 +101,55 @@ contract PoolFundingManager {
     // ================================
     
     modifier onlyAdmin() {
+        _onlyAdmin();
+        _;
+    }
+
+    function _onlyAdmin() internal view {
         if (!ACCESS_CONTROL.isAdmin(msg.sender)) {
             revert NotAdmin(msg.sender);
         }
+    }
+
+    modifier onlyInvestor() {
+        _onlyInvestor();
         _;
     }
-    
-    modifier onlyInvestor() {
+
+    function _onlyInvestor() internal view {
         if (!ACCESS_CONTROL.isInvestor(msg.sender)) {
             revert NotInvestor(msg.sender);
         }
-        _;
     }
-    
+
     modifier validAddress(address addr) {
-        if (addr == address(0)) revert ZeroAddress();
+        _validAddress(addr);
         _;
     }
-    
+
+    function _validAddress(address addr) internal pure {
+        if (addr == address(0)) revert ZeroAddress();
+    }
+
     modifier validPoolId(uint256 poolId) {
+        _validPoolId(poolId);
+        _;
+    }
+
+    function _validPoolId(uint256 poolId) internal view {
         if (poolId == 0 || poolId > POOL_NFT.totalSupply()) {
             revert InvalidPoolId(poolId);
         }
-        _;
     }
-    
+
     modifier validAmount(uint256 amount) {
-        if (amount == 0) revert InvalidAmount(amount);
+        _validAmount(amount);
         _;
     }
-    
-    // ================================
+
+    function _validAmount(uint256 amount) internal pure {
+        if (amount == 0) revert InvalidAmount(amount);
+    }    // ================================
     // Constructor
     // ================================
     
