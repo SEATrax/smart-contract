@@ -17,6 +17,35 @@ Goal: write secure, gas-efficient contracts with clear business logic and compre
 - Write NatSpec comments on all `public` and `external` functions
 - Use `constant`/`immutable` for configuration constants
 - Use basis points (1 bp = 0.01%) to handle percentages accurately
+- **Address all forge build warnings**: Code should compile without warnings, not just errors
+- Use named imports: `import {AccessControl} from "@openzeppelin/..."` instead of plain imports
+- Use mixedCase for variables and functions: `invoiceNft` not `invoiceNFT`
+- Wrap modifier logic in internal functions to reduce bytecode size and gas costs
+
+## Gas Optimization Guidelines
+- **Optimize for gas efficiency**: Always consider gas costs in implementation decisions
+- **Use custom errors** instead of `require` strings to save gas (32+ bytes saved per error)
+- **Pack structs efficiently**: Group variables by size to minimize storage slots
+- **Use `calldata` instead of `memory`** for function parameters when possible
+- **Minimize storage reads/writes**: Cache frequently accessed storage variables
+- **Use `unchecked` blocks** for arithmetic that cannot overflow/underflow
+- **Prefer `++i` over `i++`** in loops for slight gas savings
+- **Use assembly for low-level optimizations** when safe and necessary
+- **Batch operations** when possible to reduce transaction costs
+- **Consider using `mapping` over arrays** for lookups to save gas
+- **Test gas usage**: Include gas measurement tests and set reasonable limits
+  - Simple operations: <50k gas
+  - Role operations: <125k gas (due to OpenZeppelin enumeration overhead)
+  - Complex operations: <200k gas
+  - Deployment: Monitor but prioritize functionality over deployment cost
+- **Use `view`/`pure` functions** to avoid state changes when possible
+- **Consider gas vs functionality trade-offs**: Sometimes enumerable features cost more gas but provide essential functionality
+
+## Gas Analysis Notes
+- **OpenZeppelin AccessControlEnumerable**: Higher gas cost (~107k-120k) but provides essential member enumeration
+- **Custom errors**: Already implemented for gas savings
+- **Modifier optimization**: Already using internal functions to reduce bytecode size
+- **Future optimizations**: Consider custom role management for Phase 4+ if gas costs become critical
 
 ## Security Best Practices
 

@@ -8,19 +8,19 @@
 - [x] Create basic deployment script template
 - [x] Verify compilation and testing environment
 
-## Phase 2: Access Control System
-- [ ] Design role-based access control architecture
-- [ ] Implement `AccessControl.sol` contract
-  - [ ] Define roles: Admin, Exporter, Investor
-  - [ ] Implement role assignment/revocation functions
-  - [ ] Create role-based modifiers (onlyAdmin, onlyExporter, onlyInvestor)
-  - [ ] Add admin management functions
-- [ ] Write comprehensive tests for `AccessControl.t.sol`
-  - [ ] Test role assignment and revocation
-  - [ ] Test access control modifiers
-  - [ ] Test unauthorized access scenarios
-  - [ ] Test admin transfer functionality
-- [ ] Security audit of access control implementation
+## Phase 2: Access Control System ✅ COMPLETE
+- [x] Design role-based access control architecture
+- [x] Implement `AccessControl.sol` contract
+  - [x] Define roles: Admin, Exporter, Investor
+  - [x] Implement role assignment/revocation functions
+  - [x] Create role-based modifiers (onlyAdmin, onlyExporter, onlyInvestor)
+  - [x] Add admin management functions
+- [x] Write comprehensive tests for `AccessControl.t.sol`
+  - [x] Test role assignment and revocation
+  - [x] Test access control modifiers
+  - [x] Test unauthorized access scenarios
+  - [x] Test admin transfer functionality
+- [x] Security audit of access control implementation
 
 ## Phase 3: Invoice NFT System (Shipping Invoice Representation)
 - [ ] Implement `InvoiceNFT.sol` (ERC-721)

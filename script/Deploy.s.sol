@@ -19,7 +19,7 @@ import {Script, console} from "forge-std/Script.sol";
 contract DeployScript is Script {
     // Deployment addresses (will be populated during deployment)
     address public accessControl;
-    address public invoiceNFT;
+    address public invoiceNft;
     address public poolManager;
     address public investmentPool;
     address public paymentEscrow;
@@ -53,7 +53,7 @@ contract DeployScript is Script {
 
         // Phase 2: Deploy Invoice NFT
         console.log("\n=== Deploying Invoice NFT ===");
-        deployInvoiceNFT();
+        deployInvoiceNft();
 
         // Phase 3: Deploy Pool Manager
         console.log("\n=== Deploying Pool Manager ===");
@@ -81,56 +81,56 @@ contract DeployScript is Script {
         logDeploymentSummary();
     }
 
-    function deployAccessControl() internal {
+    function deployAccessControl() internal pure {
         console.log("Deploying AccessControl...");
         // accessControl = address(new AccessControl(admin));
         // console.log("AccessControl deployed at:", accessControl);
         console.log("AccessControl deployment - TODO: Implement in Phase 2");
     }
 
-    function deployInvoiceNFT() internal {
+    function deployInvoiceNft() internal pure {
         console.log("Deploying InvoiceNFT...");
-        // invoiceNFT = address(new InvoiceNFT(accessControl));
-        // console.log("InvoiceNFT deployed at:", invoiceNFT);
+        // invoiceNft = address(new InvoiceNFT(accessControl));
+        // console.log("InvoiceNFT deployed at:", invoiceNft);
         console.log("InvoiceNFT deployment - TODO: Implement in Phase 3");
     }
 
-    function deployPoolManager() internal {
+    function deployPoolManager() internal pure {
         console.log("Deploying PoolManager...");
-        // poolManager = address(new PoolManager(accessControl, invoiceNFT));
+        // poolManager = address(new PoolManager(accessControl, invoiceNft));
         // console.log("PoolManager deployed at:", poolManager);
         console.log("PoolManager deployment - TODO: Implement in Phase 4");
     }
 
-    function deployInvestmentPool() internal {
+    function deployInvestmentPool() internal pure {
         console.log("Deploying InvestmentPool...");
         // investmentPool = address(new InvestmentPool(accessControl, poolManager));
         // console.log("InvestmentPool deployed at:", investmentPool);
         console.log("InvestmentPool deployment - TODO: Implement in Phase 4");
     }
 
-    function deployPaymentEscrow() internal {
+    function deployPaymentEscrow() internal pure {
         console.log("Deploying PaymentEscrow...");
-        // paymentEscrow = address(new PaymentEscrow(accessControl, invoiceNFT, platformFeePercent, investorYieldPercent));
+        // paymentEscrow = address(new PaymentEscrow(accessControl, invoiceNft, platformFeePercent, investorYieldPercent));
         // console.log("PaymentEscrow deployed at:", paymentEscrow);
         console.log("PaymentEscrow deployment - TODO: Implement in Phase 5");
     }
 
-    function deployPaymentOracle() internal {
+    function deployPaymentOracle() internal pure {
         console.log("Deploying PaymentOracle...");
         // paymentOracle = address(new PaymentOracle(accessControl, paymentEscrow));
         // console.log("PaymentOracle deployed at:", paymentOracle);
         console.log("PaymentOracle deployment - TODO: Implement in Phase 6");
     }
 
-    function configureContracts() internal {
+    function configureContracts() internal pure {
         console.log("Setting up contract permissions and configurations...");
         
         // Set up roles and permissions
         // AccessControl(accessControl).grantRole(INVESTMENT_MANAGER_ROLE, investmentManager);
         
         // Configure contract addresses in other contracts
-        // InvoiceNFT(invoiceNFT).setPoolManager(poolManager);
+        // InvoiceNFT(invoiceNft).setPoolManager(poolManager);
         // PoolManager(poolManager).setInvestmentPool(investmentPool);
         // PaymentEscrow(paymentEscrow).setPaymentOracle(paymentOracle);
         
@@ -140,7 +140,7 @@ contract DeployScript is Script {
     function logDeploymentSummary() internal view {
         console.log("\n=== DEPLOYMENT SUMMARY ===");
         console.log("AccessControl:", accessControl);
-        console.log("InvoiceNFT:", invoiceNFT);
+        console.log("InvoiceNFT:", invoiceNft);
         console.log("PoolManager:", poolManager);
         console.log("InvestmentPool:", investmentPool);
         console.log("PaymentEscrow:", paymentEscrow);
@@ -151,7 +151,7 @@ contract DeployScript is Script {
         // This would be useful for integration tests and frontend integration
         console.log("\nSave these addresses for testing and integration:");
         console.log("export ACCESS_CONTROL=", accessControl);
-        console.log("export INVOICE_NFT=", invoiceNFT);
+        console.log("export INVOICE_NFT=", invoiceNft);
         console.log("export POOL_MANAGER=", poolManager);
         console.log("export INVESTMENT_POOL=", investmentPool);
         console.log("export PAYMENT_ESCROW=", paymentEscrow);
