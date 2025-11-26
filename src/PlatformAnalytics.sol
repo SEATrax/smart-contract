@@ -65,7 +65,7 @@ contract PlatformAnalytics {
         uint256 totalReturns;               // Total returns received
         uint256 activeInvestments;          // Current active investments
         uint256 completedInvestments;       // Number of completed investments
-        uint256 averageROI;                 // Average return on investment (basis points)
+        uint256 averageRoi;                 // Average return on investment (basis points)
         uint256 totalPoolsInvested;         // Number of pools invested in
         uint256 lastInvestmentTimestamp;    // Timestamp of last investment
         uint256 riskScore;                  // Risk assessment score (0-10000)
@@ -80,7 +80,7 @@ contract PlatformAnalytics {
         uint256 averageTimeToCompletion;    // Average time from funding to completion
         uint256 investorCount;              // Number of investors in pool
         uint256 riskRating;                 // Risk assessment (0-10000)
-        uint256 actualROI;                  // Actual ROI achieved (basis points)
+        uint256 actualRoi;                  // Actual ROI achieved (basis points)
         bool isCompleted;                   // Whether pool is fully completed
         uint256 completedTimestamp;         // When pool was completed
     }
@@ -104,7 +104,7 @@ contract PlatformAnalytics {
         uint256 totalVolume;                // Total transaction volume
         uint256 newInvestments;             // New investments in period
         uint256 completedInvoices;          // Invoices completed in period
-        uint256 averageROI;                 // Average ROI in period
+        uint256 averageRoi;                 // Average ROI in period
         uint256 platformUtilization;       // Platform utilization rate
     }
 
@@ -131,7 +131,7 @@ contract PlatformAnalytics {
     mapping(bytes32 => uint256) public lastUpdateTimestamp;
     
     /// @notice ROI tracking for completed pools
-    mapping(uint256 => uint256) public poolROI;
+    mapping(uint256 => uint256) public poolRoi;
     
     /// @notice Risk scores for pools (calculated metrics)
     mapping(uint256 => uint256) public poolRiskScores;
@@ -164,7 +164,7 @@ contract PlatformAnalytics {
     
     event PoolAnalysisCompleted(
         uint256 indexed poolId,
-        uint256 actualROI,
+        uint256 actualRoi,
         uint256 riskRating,
         uint256 timestamp
     );
@@ -218,20 +218,20 @@ contract PlatformAnalytics {
 
     constructor(
         address accessControl,
-        address invoiceNft,
-        address poolNft,
+        address invoiceNft_,
+        address poolNft_,
         address poolFundingManager,
         address paymentOracle
     ) {
         if (accessControl == address(0)) revert ZeroAddress();
-        if (invoiceNft == address(0)) revert ZeroAddress();
-        if (poolNft == address(0)) revert ZeroAddress();
+        if (invoiceNft_ == address(0)) revert ZeroAddress();
+        if (poolNft_ == address(0)) revert ZeroAddress();
         if (poolFundingManager == address(0)) revert ZeroAddress();
         if (paymentOracle == address(0)) revert ZeroAddress();
 
         ACCESS_CONTROL = PlatformAccessControl(accessControl);
-        INVOICE_NFT = InvoiceNFT(invoiceNft);
-        POOL_NFT = PoolNFT(poolNft);
+        INVOICE_NFT = InvoiceNFT(invoiceNft_);
+        POOL_NFT = PoolNFT(poolNft_);
         POOL_FUNDING_MANAGER = PoolFundingManager(poolFundingManager);
         PAYMENT_ORACLE = PaymentOracle(paymentOracle);
     }
@@ -292,7 +292,7 @@ contract PlatformAnalytics {
         ) = _calculateInvestorTotals(investor);
         
         // Calculate performance metrics
-        portfolio.averageROI = _calculateInvestorROI(investor);
+        portfolio.averageRoi = _calculateInvestorRoi(investor);
         portfolio.riskScore = _calculateInvestorRiskScore(investor);
         portfolio.lastInvestmentTimestamp = _getLastInvestmentTimestamp(investor);
         
@@ -326,9 +326,9 @@ contract PlatformAnalytics {
         // Calculate financial performance
         if (performance.isCompleted) {
             performance.totalReturned = _calculatePoolReturns(poolId);
-            performance.actualROI = _calculatePoolROI(poolId);
+            performance.actualRoi = _calculatePoolRoi(poolId);
             performance.completedTimestamp = block.timestamp;
-            poolROI[poolId] = performance.actualROI;
+            poolRoi[poolId] = performance.actualRoi;
         }
         
         // Calculate risk rating
@@ -337,7 +337,7 @@ contract PlatformAnalytics {
         
         emit PoolAnalysisCompleted(
             poolId,
-            performance.actualROI,
+            performance.actualRoi,
             performance.riskRating,
             block.timestamp
         );
@@ -380,7 +380,7 @@ contract PlatformAnalytics {
      * @notice Create historical data snapshot
      */
     function createHistoricalSnapshot() external onlyAdmin {
-        uint256 currentDay = (block.timestamp / TIME_SERIES_INTERVAL) * TIME_SERIES_INTERVAL;
+        uint256 currentDay = block.timestamp - (block.timestamp % TIME_SERIES_INTERVAL);
         
         TimeSeriesData storage data = historicalData[currentDay];
         data.timestamp = currentDay;
@@ -389,7 +389,7 @@ contract PlatformAnalytics {
         data.totalVolume = _calculateCurrentVolume();
         data.newInvestments = _calculateNewInvestments(currentDay);
         data.completedInvoices = _calculateCompletedInvoices(currentDay);
-        data.averageROI = _calculateCurrentAverageROI();
+        data.averageRoi = _calculateCurrentAverageRoi();
         data.platformUtilization = _calculatePlatformUtilization();
         
         emit PlatformSnapshotCreated(
@@ -471,7 +471,7 @@ contract PlatformAnalytics {
                 poolIds[index] = i;
                 investments[index] = investment;
                 investorReturns[index] = _getInvestorPoolReturns(investor, i);
-                rois[index] = _calculateInvestorPoolROI(investor, i);
+                rois[index] = _calculateInvestorPoolRoi(investor, i);
                 index++;
             }
         }
@@ -486,7 +486,7 @@ contract PlatformAnalytics {
      */
     function getTopInvestors(uint256 limit)
         external
-        view
+        pure
         returns (
             address[] memory investors,
             uint256[] memory totalReturns,
@@ -569,14 +569,12 @@ contract PlatformAnalytics {
     /**
      * @notice Get pools sorted by performance
      * @param sortBy 0=ROI, 1=Volume, 2=Risk, 3=Completion
-     * @param ascending Whether to sort in ascending order
      * @param limit Number of pools to return
      * @return poolIds Array of sorted pool IDs
      * @return metrics Array of corresponding metrics
      */
     function getPoolsRanked(
         uint256 sortBy,
-        bool ascending,
         uint256 limit
     ) 
         external 
@@ -598,7 +596,7 @@ contract PlatformAnalytics {
             poolIds[count] = i;
             
             if (sortBy == 0) {
-                metrics[count] = poolROI[i];
+                metrics[count] = poolRoi[i];
             } else if (sortBy == 1) {
                 PoolNFT.Pool memory pool = POOL_NFT.getPool(i);
                 metrics[count] = pool.totalInvested;
@@ -655,7 +653,7 @@ contract PlatformAnalytics {
 
     function _calculateUserCounts() 
         internal 
-        view 
+        pure 
         returns (uint256 uniqueInvestors, uint256 uniqueExporters) 
     {
         // This would require maintaining user registries
@@ -664,13 +662,13 @@ contract PlatformAnalytics {
         uniqueExporters = 0; // Placeholder
     }
 
-    function _calculateTotalPlatformFees() internal view returns (uint256) {
+    function _calculateTotalPlatformFees() internal pure returns (uint256) {
         // Calculate based on completed transactions
         // Would need to track fee collection events
         return 0; // Placeholder
     }
 
-    function _calculateTotalInvestorReturns() internal view returns (uint256) {
+    function _calculateTotalInvestorReturns() internal pure returns (uint256) {
         // Sum all investor returns across all pools
         // Would need to track distribution events
         return 0; // Placeholder
@@ -706,7 +704,7 @@ contract PlatformAnalytics {
         }
     }
 
-    function _calculateInvestorROI(address investor) internal view returns (uint256) {
+    function _calculateInvestorRoi(address investor) internal view returns (uint256) {
         uint256 totalInvested = investorPortfolios[investor].totalInvested;
         uint256 totalReturns = investorPortfolios[investor].totalReturns;
         
@@ -715,13 +713,13 @@ contract PlatformAnalytics {
         return (totalReturns * BASIS_POINTS) / totalInvested;
     }
 
-    function _calculateInvestorRiskScore(address investor) internal view returns (uint256) {
+    function _calculateInvestorRiskScore(address /* investor */) internal pure returns (uint256) {
         // Calculate based on portfolio diversification and risk factors
         // Placeholder implementation
         return 5000; // Medium risk
     }
 
-    function _getLastInvestmentTimestamp(address investor) internal view returns (uint256) {
+    function _getLastInvestmentTimestamp(address /* investor */) internal pure returns (uint256) {
         // Would need to track investment events
         return 0; // Placeholder
     }
@@ -754,13 +752,13 @@ contract PlatformAnalytics {
         averageTimeToCompletion = completedCount > 0 ? totalTime / completedCount : 0;
     }
 
-    function _calculatePoolReturns(uint256 poolId) internal view returns (uint256) {
+    function _calculatePoolReturns(uint256 /* poolId */) internal pure returns (uint256) {
         // Calculate total returns for the pool
         // Would need to track distribution events
         return 0; // Placeholder
     }
 
-    function _calculatePoolROI(uint256 poolId) internal view returns (uint256) {
+    function _calculatePoolRoi(uint256 poolId) internal view returns (uint256) {
         PoolNFT.Pool memory pool = POOL_NFT.getPool(poolId);
         uint256 totalReturns = _calculatePoolReturns(poolId);
         
@@ -791,7 +789,7 @@ contract PlatformAnalytics {
         return 9000; // High risk
     }
 
-    function _assessConcentrationRisk(uint256 poolId) internal view returns (uint256) {
+    function _assessConcentrationRisk(uint256 /* poolId */) internal pure returns (uint256) {
         // Check exporter concentration
         return 5000; // Placeholder - medium risk
     }
@@ -804,27 +802,27 @@ contract PlatformAnalytics {
         return 8000; // High risk
     }
 
-    function _assessCreditRisk(uint256 poolId) internal view returns (uint256) {
+    function _assessCreditRisk(uint256 /* poolId */) internal pure returns (uint256) {
         // Assess based on exporter history and reliability
         return 4000; // Placeholder
     }
 
-    function _assessMarketRisk(uint256 poolId) internal view returns (uint256) {
+    function _assessMarketRisk(uint256 /* poolId */) internal pure returns (uint256) {
         // Market conditions assessment
         return 3000; // Placeholder
     }
 
-    function _getPoolInvestorCount(uint256 poolId) internal view returns (uint256) {
+    function _getPoolInvestorCount(uint256 /* poolId */) internal pure returns (uint256) {
         // Count unique investors in pool
         return 0; // Placeholder - would need investor tracking
     }
 
-    function _getInvestorPoolReturns(address investor, uint256 poolId) internal view returns (uint256) {
+    function _getInvestorPoolReturns(address /* investor */, uint256 /* poolId */) internal pure returns (uint256) {
         // Get returns for specific investor in specific pool
         return 0; // Placeholder
     }
 
-    function _calculateInvestorPoolROI(address investor, uint256 poolId) internal view returns (uint256) {
+    function _calculateInvestorPoolRoi(address investor, uint256 poolId) internal view returns (uint256) {
         uint256 investment = POOL_FUNDING_MANAGER.investorPoolInvestments(poolId, investor);
         uint256 investorReturns = _getInvestorPoolReturns(investor, poolId);
         
@@ -930,7 +928,7 @@ contract PlatformAnalytics {
         return exporterPoolCount;
     }
 
-    function _getExporterLastActivity(address exporter) internal view returns (uint256) {
+    function _getExporterLastActivity(address /* exporter */) internal pure returns (uint256) {
         // Get timestamp of last invoice activity
         return 0; // Placeholder - would need event tracking
     }
@@ -940,29 +938,29 @@ contract PlatformAnalytics {
         return platformMetrics.totalValueLocked;
     }
 
-    function _calculateNewInvestments(uint256 dayTimestamp) internal view returns (uint256) {
+    function _calculateNewInvestments(uint256 /* dayTimestamp */) internal pure returns (uint256) {
         // Count investments made on specific day
         return 0; // Placeholder - would need event filtering
     }
 
-    function _calculateCompletedInvoices(uint256 dayTimestamp) internal view returns (uint256) {
+    function _calculateCompletedInvoices(uint256 /* dayTimestamp */) internal pure returns (uint256) {
         // Count invoices completed on specific day
         return 0; // Placeholder - would need event filtering
     }
 
-    function _calculateCurrentAverageROI() internal view returns (uint256) {
+    function _calculateCurrentAverageRoi() internal view returns (uint256) {
         uint256 poolCount = POOL_NFT.totalSupply();
-        uint256 totalROI = 0;
+        uint256 totalRoi = 0;
         uint256 completedPools = 0;
         
         for (uint256 i = 1; i <= poolCount; i++) {
             if (poolPerformance[i].isCompleted) {
-                totalROI += poolROI[i];
+                totalRoi += poolRoi[i];
                 completedPools++;
             }
         }
         
-        return completedPools > 0 ? totalROI / completedPools : 0;
+        return completedPools > 0 ? totalRoi / completedPools : 0;
     }
 
     function _calculatePlatformUtilization() internal view returns (uint256) {
@@ -1010,14 +1008,14 @@ contract PlatformAnalytics {
         volumes = new uint256[](dataPoints);
         rois = new uint256[](dataPoints);
         
-        uint256 currentTimestamp = (fromTimestamp / TIME_SERIES_INTERVAL) * TIME_SERIES_INTERVAL;
+        uint256 currentTimestamp = fromTimestamp - (fromTimestamp % TIME_SERIES_INTERVAL);
         
         for (uint256 i = 0; i < dataPoints && currentTimestamp <= toTimestamp; i++) {
             timestamps[i] = currentTimestamp;
             
             TimeSeriesData memory data = historicalData[currentTimestamp];
             volumes[i] = data.totalVolume;
-            rois[i] = data.averageROI;
+            rois[i] = data.averageRoi;
             
             currentTimestamp += TIME_SERIES_INTERVAL;
         }

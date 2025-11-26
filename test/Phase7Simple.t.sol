@@ -16,8 +16,8 @@ import {PaymentOracle} from "../src/PaymentOracle.sol";
 contract Phase7AnalyticsSimpleTest is Test {
     PlatformAnalytics public analytics;
     PlatformAccessControl public accessControl;
-    InvoiceNFT public invoiceNFT;
-    PoolNFT public poolNFT;
+    InvoiceNFT public invoiceNft;
+    PoolNFT public poolNft;
     PoolFundingManager public fundingManager;
     PaymentOracle public paymentOracle;
 
@@ -36,23 +36,23 @@ contract Phase7AnalyticsSimpleTest is Test {
         accessControl = new PlatformAccessControl(admin);
 
         vm.startPrank(admin);
-        invoiceNFT = new InvoiceNFT(address(accessControl));
-        poolNFT = new PoolNFT(address(accessControl), address(invoiceNFT));
+        invoiceNft = new InvoiceNFT(address(accessControl));
+        poolNft = new PoolNFT(address(accessControl), address(invoiceNft));
         fundingManager = new PoolFundingManager(
             address(accessControl),
-            address(invoiceNFT),
-            address(poolNFT)
+            address(invoiceNft),
+            address(poolNft)
         );
         paymentOracle = new PaymentOracle(
             address(accessControl),
-            address(invoiceNFT),
-            address(poolNFT),
+            address(invoiceNft),
+            address(poolNft),
             address(fundingManager)
         );
         analytics = new PlatformAnalytics(
             address(accessControl),
-            address(invoiceNFT),
-            address(poolNFT),
+            address(invoiceNft),
+            address(poolNft),
             address(fundingManager),
             address(paymentOracle)
         );
@@ -136,6 +136,9 @@ contract Phase7AnalyticsSimpleTest is Test {
         
         assertEq(poolIds.length, 1);
         assertEq(investments[0], INVESTMENT_AMOUNT);
+        // Touch variables to avoid warnings
+        if (investorReturns.length > 0) investorReturns;
+        if (rois.length > 0) rois;
         
         // Test risk assessment
         (uint256 riskScore, uint256[] memory riskFactors, string[] memory descriptions) = 
@@ -177,6 +180,9 @@ contract Phase7AnalyticsSimpleTest is Test {
         ) = analytics.getHistoricalTrends(fromTime, toTime);
         
         assertGt(timestamps.length, 0);
+        // Touch variables to avoid warnings
+        if (volumes.length > 0) volumes;
+        if (rois.length > 0) rois;
         
         console2.log("Historical tracking test completed successfully");
     }
@@ -205,7 +211,7 @@ contract Phase7AnalyticsSimpleTest is Test {
         
         vm.startPrank(admin);
         for (uint256 i = 0; i < 3; i++) {
-            invoiceNFT.mintInvoice(
+            invoiceNft.mintInvoice(
                 "Test Exporter Company",
                 "Test Importer Company",
                 INVOICE_AMOUNT,
@@ -217,7 +223,7 @@ contract Phase7AnalyticsSimpleTest is Test {
         vm.stopPrank();
         
         vm.prank(exporter1);
-        uint256 poolId = poolNFT.createPool(
+        uint256 poolId = poolNft.createPool(
             "Test Pool",
             invoiceIds
         );

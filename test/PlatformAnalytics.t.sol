@@ -21,8 +21,8 @@ contract PlatformAnalyticsTest is Test {
     
     PlatformAnalytics public analytics;
     PlatformAccessControl public accessControl;
-    InvoiceNFT public invoiceNFT;
-    PoolNFT public poolNFT;
+    InvoiceNFT public invoiceNft;
+    PoolNFT public poolNft;
     PoolFundingManager public fundingManager;
     PaymentOracle public paymentOracle;
 
@@ -70,7 +70,7 @@ contract PlatformAnalyticsTest is Test {
     
     event PoolAnalysisCompleted(
         uint256 indexed poolId,
-        uint256 actualROI,
+        uint256 actualRoi,
         uint256 riskRating,
         uint256 timestamp
     );
@@ -92,25 +92,25 @@ contract PlatformAnalyticsTest is Test {
         // Deploy core contracts
         vm.startPrank(admin);
         
-        invoiceNFT = new InvoiceNFT(address(accessControl));
-        poolNFT = new PoolNFT(address(accessControl), address(invoiceNFT));
+        invoiceNft = new InvoiceNFT(address(accessControl));
+        poolNft = new PoolNFT(address(accessControl), address(invoiceNft));
         fundingManager = new PoolFundingManager(
             address(accessControl),
-            address(invoiceNFT),
-            address(poolNFT)
+            address(invoiceNft),
+            address(poolNft)
         );
         paymentOracle = new PaymentOracle(
             address(accessControl),
-            address(invoiceNFT),
-            address(poolNFT),
+            address(invoiceNft),
+            address(poolNft),
             address(fundingManager)
         );
 
         // Deploy analytics contract
         analytics = new PlatformAnalytics(
             address(accessControl),
-            address(invoiceNFT),
-            address(poolNFT),
+            address(invoiceNft),
+            address(poolNft),
             address(fundingManager),
             address(paymentOracle)
         );
@@ -139,11 +139,11 @@ contract PlatformAnalyticsTest is Test {
     // Constructor & Initialization Tests
     // ================================
 
-    function testConstructor() public {
+    function testConstructor() public view {
         // Verify all contract references are set correctly
         assertEq(address(analytics.ACCESS_CONTROL()), address(accessControl));
-        assertEq(address(analytics.INVOICE_NFT()), address(invoiceNFT));
-        assertEq(address(analytics.POOL_NFT()), address(poolNFT));
+        assertEq(address(analytics.INVOICE_NFT()), address(invoiceNft));
+        assertEq(address(analytics.POOL_NFT()), address(poolNft));
         assertEq(address(analytics.POOL_FUNDING_MANAGER()), address(fundingManager));
         assertEq(address(analytics.PAYMENT_ORACLE()), address(paymentOracle));
     }
@@ -152,8 +152,8 @@ contract PlatformAnalyticsTest is Test {
         vm.expectRevert(PlatformAnalytics.ZeroAddress.selector);
         new PlatformAnalytics(
             address(0),
-            address(invoiceNFT),
-            address(poolNFT),
+            address(invoiceNft),
+            address(poolNft),
             address(fundingManager),
             address(paymentOracle)
         );
@@ -162,13 +162,13 @@ contract PlatformAnalyticsTest is Test {
         new PlatformAnalytics(
             address(accessControl),
             address(0),
-            address(poolNFT),
+            address(poolNft),
             address(fundingManager),
             address(paymentOracle)
         );
     }
 
-    function testConstants() public {
+    function testConstants() public view {
         assertEq(analytics.BASIS_POINTS(), 10000);
         assertEq(analytics.MAX_RISK_SCORE(), 10000);
         assertEq(analytics.TIME_SERIES_INTERVAL(), 1 days);
@@ -299,7 +299,7 @@ contract PlatformAnalyticsTest is Test {
         assertEq(investments[1], INVESTMENT_AMOUNT * 2);
     }
 
-    function testGetTopInvestorsPlaceholder() public {
+    function testGetTopInvestorsPlaceholder() public view {
         // This tests the placeholder implementation
         (
             address[] memory investors,
@@ -390,7 +390,7 @@ contract PlatformAnalyticsTest is Test {
         (
             uint256[] memory poolIds,
             uint256[] memory metrics
-        ) = analytics.getPoolsRanked(0, false, 3); // Sort by ROI, descending
+        ) = analytics.getPoolsRanked(0, 3); // Sort by ROI, 3 results
 
         assertEq(poolIds.length, 3);
         assertEq(metrics.length, 3);
@@ -442,7 +442,7 @@ contract PlatformAnalyticsTest is Test {
     function testCreateHistoricalSnapshot() public {
         vm.expectEmit(false, false, false, true);
         emit PlatformSnapshotCreated(
-            (block.timestamp / 1 days) * 1 days,
+            block.timestamp - (block.timestamp % 1 days),
             0, // Total volume (placeholder)
             0  // Unique investors (placeholder)
         );
@@ -634,7 +634,7 @@ contract PlatformAnalyticsTest is Test {
         // Create test invoices
         vm.startPrank(admin);
         for (uint256 i = 0; i < 3; i++) {
-            invoiceNFT.mintInvoice(
+            invoiceNft.mintInvoice(
                 "Test Exporter Company",
                 "Test Importer Company",
                 INVOICE_AMOUNT,
@@ -647,7 +647,7 @@ contract PlatformAnalyticsTest is Test {
         
         // Create pool
         vm.prank(exporter1);
-        uint256 poolId = poolNFT.createPool(
+        uint256 poolId = poolNft.createPool(
             "Test Pool",
             invoiceIds
         );
@@ -659,10 +659,10 @@ contract PlatformAnalyticsTest is Test {
         _createTestPool();
     }
 
-    function _createTestInvoicesForExporter(address exporter) internal {
+    function _createTestInvoicesForExporter(address /* exporter */) internal {
         vm.startPrank(admin);
         for (uint256 i = 0; i < 3; i++) {
-            invoiceNFT.mintInvoice(
+            invoiceNft.mintInvoice(
                 "Test Exporter Company",
                 "Test Importer Company",
                 INVOICE_AMOUNT + (i * 10000e6),

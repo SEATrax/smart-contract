@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.30;
 
-import {Test, console} from "forge-std/Test.sol";
+import {Test} from "forge-std/Test.sol";
 
 /**
  * @title Foundation Test
@@ -9,14 +9,13 @@ import {Test, console} from "forge-std/Test.sol";
  * @dev This test will be removed once actual contract tests are implemented
  */
 contract FoundationTest is Test {
-    function setUp() public {
-        console.log("Setting up foundation test");
+    function setUp() public pure {
+        // Empty setup - no state changes needed
     }
 
-    function testFoundationSetup() public view {
+    function testFoundationSetup() public pure {
         // Basic test to ensure the testing framework is working
         assertTrue(true, "Foundation test should pass");
-        console.log("Foundation test passed - testing framework is working!");
     }
 
     function testEnvironment() public view {
