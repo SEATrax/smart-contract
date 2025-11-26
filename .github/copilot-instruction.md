@@ -1,120 +1,108 @@
-# Export-Import Funding Smart Contract Project Instructions for GitHub Copilot
+# GitHub Copilot Instructions – Solidity Project
 
 ## Project Overview
-You are assisting in building Solidity smart contracts for an export-import funding platform using Foundry as the development and testing framework.
+You are assisting on a Solidity smart contract project using Foundry.  
+Goal: write secure, gas-efficient contracts with clear business logic and comprehensive test coverage.
 
-The platform allows:
-- Exporters to submit invoices/export receivables to the platform.
-- Invoices are converted to NFTs (minting cost charged to exporter).
-- Invoices are also converted to payment links for importers.
-- Platform/Investment Manager groups NFTs with certain criteria into pools.
-- Total pool funding = total funding requests from exporters in that pool.
-- Investors can view various pools and invest in desired pools (full or partial).
-- When pool needs are met (100%), no more investments allowed.
-- When pool reaches 70% funding, pool becomes eligible for withdrawal.
-- Exporters can withdraw funds at 70% (manual trigger) or wait for 100% (auto-disbursement).
-- Importers receive payment reminders via automated billing.
-- When importers make payments, pool balance/status updates.
-- When all importers have paid (100%), system allocates funds: Platform fee 1% + Investors (100% loan + 4% yield) + remainder to exporters.
-- Role-based access control with the roles: Admin, Investment Manager, Exporter, Investor, Importer.
+## Tech Stack
+- Solidity ^0.8.x (latest stable)
+- Foundry (`forge`) for build, test, and scripts
+- OpenZeppelin for ERC standards, access control, and guards (when appropriate)
 
 ## Coding Guidelines
-- Use Solidity stable versions (e.g., ^0.8.20).
-- Follow Solidity best practices for security (reentrancy guards, input validation, checks-effects-interactions).
-- Use modular contract architecture: separate concerns for NFTs, Pools, Investments, Escrow, AccessControl, and Oracle functionality.
-- Implement ERC-721 for contract NFTs.
-- Track investments meticulously using nested mappings to record investor contributions per contract in pools.
-- Use event emissions for important state changes.
-- Apply role-based access control modifiers on sensitive functions.
+- Use Solidity ^0.8.x with fixed pragma (no floating ranges)
+- Prefer composition and small, focused contracts over monolithic designs
+- Use `internal`/`private` modifiers to limit visibility
+- Use clear, consistent camelCase naming for variables and functions
+- Write NatSpec comments on all `public` and `external` functions
+- Use `constant`/`immutable` for configuration constants
+- Use basis points (1 bp = 0.01%) to handle percentages accurately
 
-## Testing Requirements
-- Use Foundry/forge for writing unit tests.
-- Provide full coverage tests for every public/external function.
-- Cover:
-  - Successful execution scenarios ("happy paths").
-  - Edge cases and boundary conditions.
-  - Correct enforcement of access controls.
-  - Expected reverts and failure cases.
-  - Correct event emissions.
-- Utilize Foundry cheatcodes for mocking, state manipulation, and reverts.
-- Write integration tests simulating full contract lifecycle: contract creation, pool formation, investment, fulfillment, payout, and refunds.
+## Security Best Practices
 
-## Best Practices
-- Prioritize security and maintainability.
-- Optimize gas consumption where possible.
-- Keep functions small and focused.
-- Document functions and complex logic with NatSpec comments.
-- Use explicit visibility (public, external, internal, private).
-- Do not expose sensitive data.
-- Use descriptive variable and function names.
-- Structure code and tests clearly by feature.
+### Checks-Effects-Interactions (CEI) Pattern
 
-## Project Layout
-/src
-	•	InvoiceNFT.sol
-	•	PoolManager.sol
-	•	InvestmentPool.sol
-	•	PaymentEscrow.sol
-	•	AccessControl.sol
-	•	PaymentOracle.sol
-/test
-	•	InvoiceNFT.t.sol
-	•	PoolManager.t.sol
-	•	InvestmentPool.t.sol
-	•	PaymentEscrow.t.sol
-	•	AccessControl.t.sol
-	•	PaymentOracle.t.sol
-/scripts
-	•	Deploy.s.sol
-    •   foundry.toml
+- Always follow the CEI pattern in functions that modify state and transfer funds:
+  1. **Checks:** Validate all conditions using `require` or custom errors upfront.
+  2. **Effects:** Update all contract state variables after checks pass.
+  3. **Interactions:** Perform external calls or transfers *last* to avoid reentrancy vulnerabilities.
 
----
+### Contract Structure and Positioning Rules
 
-Follow these instructions closely when generating Solidity code or test scripts.
+- **Custom Errors:**  
+  - Declare custom errors at the top of the contract, immediately after SPDX license and pragma statements.
+  - Name errors clearly reflecting the failure reason.
+  
+- **Events:**  
+  - Declare all events after error declarations.
+  - Emit events at the *end* of state-modifying functions after all state changes.
 
-# Solidity API Style and Error Handling Conventions
+- **Functions Order:**  
+  - Start with public and external functions grouped by functionality.
+  - Follow with internal and private helper functions.
+  - Use modifiers after functions and before internal functions.
+  - Organize functions with NatSpec comments describing their purpose and behavior.
 
-## API Style Guidelines
-
-- Use clear, descriptive function names reflecting their intent.
-- Group related functions meaningfully.
-- Use `external` visibility for functions called by users or other contracts.
-- Use `public` for internal calls exposed externally.
-- Use modifiers for access control (e.g., `onlyAdmin`, `onlyInvestor`).
-- Emit events on every important state change.
-- Document functions with NatSpec comments.
-- Return values explicitly when appropriate.
-- Use require/assert checks with clear revert messages on all input validations.
-
-### Example
+### Example Structure
 ```solidity
-event Invested(address indexed investor, uint256 indexed poolId, uint256 amount);
-function invest(uint256 poolId, uint256 amount) external onlyInvestor {require(amount > 0, “Invest: amount must be > 0”);// Investment logic …emit Invested(msg.sender, poolId, amount);}
-```
-
----
-
-## Error Handling Conventions
-
-- Use custom errors (`error Unauthorized(address caller);`) for gas-efficient and clear reverts.
-- Use `require` for simple conditions with readable revert messages.
-- Use `revert` for complex revert scenarios with custom errors.
-- Always check input parameters thoroughly.
-- Protect external calls with reentrancy guards.
-- Gracefully handle failed external calls.
-- Use modifier functions to enforce preconditions.
-- Provide internal helper functions for repeated checks.
-
-### Example
-```solidity
+// SPDX-License-Identifier: MITpragma solidity ^0.8.20;
 error Unauthorized(address caller);
-error InvalidAmount(uint256 amount);
+error InsufficientBalance(uint256 requested, uint256 available);
+event Deposited(address indexed user, uint256 amount);event Withdrawn(address indexed user, uint256 amount);
+contract Example {mapping(address => uint256) private balances;
 
-modifier onlyAdmin() {
-    if (msg.sender != admin) revert Unauthorized(msg.sender);_;}
-function depositPayment(uint256 contractId) external payable {if (msg.value == 0) revert InvalidAmount(0);// …}
+modifier onlyOwner() {
+    if (msg.sender != owner) revert Unauthorized(msg.sender);
+    _;
+}
+
+function deposit() external payable {
+    // Checks
+    require(msg.value > 0, "Deposit: amount must be > 0");
+
+    // Effects
+    balances[msg.sender] += msg.value;
+
+    // Interactions - none here
+
+    emit Deposited(msg.sender, msg.value);
+}
+
+function withdraw(uint256 amount) external {
+    // Checks
+    uint256 bal = balances[msg.sender];
+    if (amount == 0 || amount > bal) revert InsufficientBalance(amount, bal);
+
+    // Effects
+    balances[msg.sender] = bal - amount;
+
+    // Interactions
+    (bool sent, ) = payable(msg.sender).call{value: amount}("");
+    require(sent, "Withdraw: failed to send Ether");
+
+    emit Withdrawn(msg.sender, amount);
+}
+
+// Internal helper functions here
 ```
+---
+## Testing Guidelines (Foundry)
+- One test file per contract (e.g., `ContractName.t.sol`)
+- Cover every public/external function for:
+  - Successful executions (happy paths)
+  - Access control restrictions and failures
+  - Edge and boundary cases
+  - Expected revert scenarios
+- Write integration tests for full flows
+- Use Foundry cheatcodes for better test control
+- Aim for high coverage and detailed assertions
 
 ---
 
-These conventions promote readable, maintainable, and secure smart contract code consistent with Ethereum best practices.
+## Project Structure
+- `src/` — Solidity contracts  
+- `test/` — Foundry test scripts  
+- `script/` — Deployment and utility scripts  
+- `foundry.toml` — Foundry configuration
+
+Follow these instructions strictly to ensure robust, secure, and maintainable Solidity code.
