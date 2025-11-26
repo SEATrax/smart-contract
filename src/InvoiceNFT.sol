@@ -482,6 +482,36 @@ contract InvoiceNFT is ERC721Enumerable {
         emit InvoicePaymentConfirmed(invoiceId, msg.sender);
     }
 
+    /**
+     * @notice Mark an invoice as paid with specific amount (for oracle use)
+     * @param invoiceId The invoice ID to mark as paid
+     * @param amountPaid The amount that was paid
+     */
+    function markInvoicePaid(uint256 invoiceId, uint256 amountPaid)
+        external
+        onlyAdmin
+        validInvoiceId(invoiceId)
+    {
+        Invoice storage invoice = _invoices[invoiceId];
+        
+        // Can only confirm payment for funded invoices
+        if (invoice.status != InvoiceStatus.Funded && invoice.status != InvoiceStatus.Fundraising) {
+            revert InvalidStatus(invoice.status, InvoiceStatus.Funded);
+        }
+        
+        // Validate payment amount matches shipping amount
+        if (amountPaid != invoice.shippingAmount) {
+            revert InvalidAmount(amountPaid);
+        }
+        
+        // Update status to paid
+        InvoiceStatus previousStatus = invoice.status;
+        invoice.status = InvoiceStatus.Paid;
+        
+        emit InvoiceStatusUpdated(invoiceId, previousStatus, InvoiceStatus.Paid);
+        emit InvoicePaymentConfirmed(invoiceId, msg.sender);
+    }
+
     // ================================
     // View Functions
     // ================================
