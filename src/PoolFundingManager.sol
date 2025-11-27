@@ -290,8 +290,8 @@ contract PoolFundingManager {
     {
         PoolNFT.Pool memory pool = POOL_NFT.getPool(poolId);
         
-        // Validate pool is completed
-        if (pool.status != PoolNFT.PoolStatus.Completed) {
+        // Validate pool is ready for profit distribution
+        if (pool.status != PoolNFT.PoolStatus.Settling) {
             revert PoolNotSettled(poolId);
         }
         
@@ -312,6 +312,9 @@ contract PoolFundingManager {
         poolPlatformFees[poolId] = platformFee;
         poolInvestorRewards[poolId] = investorRewards;
         poolProfitsDistributed[poolId] = true;
+        
+        // Mark pool as completed
+        POOL_NFT.markPoolCompleted(poolId, investorRewards);
         
         // Update platform statistics
         totalPlatformRevenue += platformFee;

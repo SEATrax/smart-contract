@@ -43,7 +43,11 @@ contract PaymentOracle {
     /// @notice Mapping of authorized oracle addresses
     mapping(address => bool) public authorizedOracles;
     
-    /// @notice Payment confirmations for invoices
+    /// @notice Payment confirmations per oracle for invoices  
+    /// @dev invoiceId => oracle => paymentHash => confirmed
+    mapping(uint256 => mapping(address => mapping(bytes32 => bool))) public oracleConfirmations;
+    
+    /// @notice Payment confirmations for invoices (for backward compatibility)
     /// @dev invoiceId => paymentHash => confirmed
     mapping(uint256 => mapping(bytes32 => bool)) public paymentConfirmations;
     
@@ -245,6 +249,13 @@ contract PaymentOracle {
         bytes32 paymentHash,
         uint256 amountPaid
     ) external onlyAuthorizedOracle validInvoiceId(invoiceId) {
+        PaymentRecord storage record = paymentRecords[invoiceId];
+        
+        // Check if payment already confirmed first
+        if (record.isConfirmed) {
+            revert PaymentAlreadyConfirmed(invoiceId);
+        }
+        
         InvoiceNFT.Invoice memory invoice = INVOICE_NFT.getInvoice(invoiceId);
         
         // Validate invoice is funded and eligible for payment
@@ -255,13 +266,6 @@ contract PaymentOracle {
         // Validate payment amount matches shipping amount
         if (amountPaid != invoice.shippingAmount) {
             revert PaymentAmountMismatch(invoice.shippingAmount, amountPaid);
-        }
-        
-        PaymentRecord storage record = paymentRecords[invoiceId];
-        
-        // Check if payment already confirmed
-        if (record.isConfirmed) {
-            revert PaymentAlreadyConfirmed(invoiceId);
         }
         
         // Initialize payment record if first confirmation
@@ -282,9 +286,9 @@ contract PaymentOracle {
             revert ConfirmationWindowExpired(record.paymentTimestamp + CONFIRMATION_WINDOW);
         }
         
-        // Record oracle confirmation
-        if (!paymentConfirmations[invoiceId][paymentHash]) {
-            paymentConfirmations[invoiceId][paymentHash] = true;
+        // Record oracle confirmation (check if this specific oracle already confirmed)
+        if (!oracleConfirmations[invoiceId][msg.sender][paymentHash]) {
+            oracleConfirmations[invoiceId][msg.sender][paymentHash] = true;
             record.confirmationCount++;
             
             emit PaymentSubmitted(invoiceId, paymentHash, amountPaid, msg.sender);
@@ -305,6 +309,9 @@ contract PaymentOracle {
         
         // Mark payment as confirmed
         record.isConfirmed = true;
+        
+        // Set legacy confirmation mapping for backward compatibility
+        paymentConfirmations[invoiceId][record.paymentHash] = true;
         
         // Update invoice status to Paid
         INVOICE_NFT.markInvoicePaid(invoiceId, record.amountPaid);
@@ -514,15 +521,31 @@ contract PaymentOracle {
     }
 
     /**
-     * @notice Get payment confirmation status
+     * @notice Get payment confirmation status by specific oracle
+     * @param invoiceId ID of the invoice
+     * @param oracle Address of the oracle
+     * @param paymentHash Hash of the payment
+     * @return True if payment is confirmed by the specific oracle
+     */
+    function isPaymentConfirmedByOracle(
+        uint256 invoiceId,
+        address oracle,
+        bytes32 paymentHash
+    ) external view returns (bool) {
+        return oracleConfirmations[invoiceId][oracle][paymentHash];
+    }
+
+    /**
+     * @notice Get payment confirmation status (overall)
      * @param invoiceId ID of the invoice
      * @param paymentHash Hash of the payment
-     * @return True if payment is confirmed by oracle
+     * @return True if payment has sufficient confirmations
      */
     function isPaymentConfirmed(
         uint256 invoiceId, 
         bytes32 paymentHash
     ) external view returns (bool) {
-        return paymentConfirmations[invoiceId][paymentHash];
+        PaymentRecord storage record = paymentRecords[invoiceId];
+        return record.paymentHash == paymentHash && record.isConfirmed;
     }
 }

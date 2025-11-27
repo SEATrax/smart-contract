@@ -47,6 +47,7 @@ contract PaymentOracleTest is Test {
         accessControl.grantExporterRole(exporter);
         accessControl.grantInvestorRole(investor);
         accessControl.grantAdminRole(address(fundingManager));
+        accessControl.grantAdminRole(address(paymentOracle)); // Grant admin role to oracle
 
         // Authorize oracles
         paymentOracle.authorizeOracle(oracle1);
@@ -81,7 +82,7 @@ contract PaymentOracleTest is Test {
 
         // Fund the pool
         vm.startPrank(investor);
-        fundingManager.investInPool(samplePoolId, 70e18);
+        fundingManager.investInPool(samplePoolId, 1100e18);
         vm.stopPrank();
 
         // Allocate funds
@@ -188,6 +189,11 @@ contract PaymentOracleTest is Test {
         );
         vm.stopPrank();
 
+        // Check after first confirmation
+        PaymentOracle.PaymentRecord memory record1 = paymentOracle.getPaymentRecord(sampleInvoiceId);
+        assertEq(record1.confirmationCount, 1);
+        assertFalse(record1.isConfirmed);
+
         // Second oracle confirms
         vm.startPrank(oracle2);
         paymentOracle.submitPaymentConfirmation(
@@ -250,7 +256,7 @@ contract PaymentOracleTest is Test {
         bytes32 paymentHash = keccak256("test_payment_123");
         uint256 amountPaid = 100e18;
 
-        // Confirm payment with both oracles
+        // Confirm payment with both oracles to reach confirmed state
         vm.startPrank(oracle1);
         paymentOracle.submitPaymentConfirmation(sampleInvoiceId, paymentHash, amountPaid);
         vm.stopPrank();
@@ -259,7 +265,11 @@ contract PaymentOracleTest is Test {
         paymentOracle.submitPaymentConfirmation(sampleInvoiceId, paymentHash, amountPaid);
         vm.stopPrank();
 
-        // Try to submit again
+        // Verify it's confirmed
+        PaymentOracle.PaymentRecord memory record = paymentOracle.getPaymentRecord(sampleInvoiceId);
+        assertTrue(record.isConfirmed);
+
+        // Try to submit again - should revert
         vm.startPrank(oracle1);
         vm.expectRevert(abi.encodeWithSelector(
             PaymentOracle.PaymentAlreadyConfirmed.selector,
@@ -289,9 +299,9 @@ contract PaymentOracleTest is Test {
         // Check that pool settlement was triggered
         assertTrue(paymentOracle.poolsPendingSettlement(samplePoolId));
         
-        // Check pool status
+        // Check pool status - should be Completed after profit distribution
         PoolNFT.Pool memory pool = poolNft.getPool(samplePoolId);
-        assertEq(uint8(pool.status), uint8(PoolNFT.PoolStatus.Settling));
+        assertEq(uint8(pool.status), uint8(PoolNFT.PoolStatus.Completed));
     }
 
     function test_ManualSettlement_Success() public {
@@ -306,7 +316,7 @@ contract PaymentOracleTest is Test {
         assertTrue(paymentOracle.poolsPendingSettlement(samplePoolId));
         
         PoolNFT.Pool memory pool = poolNft.getPool(samplePoolId);
-        assertEq(uint8(pool.status), uint8(PoolNFT.PoolStatus.Settling));
+        assertEq(uint8(pool.status), uint8(PoolNFT.PoolStatus.Completed));
         
         vm.stopPrank();
     }

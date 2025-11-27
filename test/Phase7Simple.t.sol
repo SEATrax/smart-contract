@@ -29,8 +29,8 @@ contract Phase7AnalyticsSimpleTest is Test {
     address public exporter1 = makeAddr("exporter1");
     address public buyer1 = makeAddr("buyer1");
 
-    uint256 public constant INVESTMENT_AMOUNT = 100000e6;
-    uint256 public constant INVOICE_AMOUNT = 200000e6;
+    uint256 public constant INVESTMENT_AMOUNT = 100000e18; // 100k tokens (above MIN_INVESTMENT)
+    uint256 public constant INVOICE_AMOUNT = 200000e18;   // 200k tokens
 
     function setUp() public {
         accessControl = new PlatformAccessControl(admin);
@@ -60,6 +60,17 @@ contract Phase7AnalyticsSimpleTest is Test {
         accessControl.grantAdminRole(address(analytics));
         accessControl.grantAdminRole(address(fundingManager));
         accessControl.grantAdminRole(address(paymentOracle));
+
+        // Grant roles to test accounts
+        accessControl.grantExporterRole(exporter1);
+        accessControl.grantInvestorRole(investor1);
+        accessControl.grantInvestorRole(investor2);
+
+        // Fund test accounts
+        vm.deal(admin, 1000000e18);
+        vm.deal(investor1, 1000000e18);
+        vm.deal(investor2, 1000000e18);
+        vm.deal(exporter1, 1000000e18);
 
         paymentOracle.authorizeOracle(oracle1);
         paymentOracle.authorizeOracle(oracle2);
@@ -209,24 +220,31 @@ contract Phase7AnalyticsSimpleTest is Test {
     function _createTestPool() internal returns (uint256) {
         uint256[] memory invoiceIds = new uint256[](3);
         
-        vm.startPrank(admin);
+        // Exporter creates invoices
+        vm.startPrank(exporter1);
         for (uint256 i = 0; i < 3; i++) {
-            invoiceNft.mintInvoice(
+            uint256 invoiceId = invoiceNft.mintInvoice(
                 "Test Exporter Company",
                 "Test Importer Company",
                 INVOICE_AMOUNT,
                 INVOICE_AMOUNT * 80 / 100, // 80% loan amount
                 block.timestamp + 30 days
             );
-            invoiceIds[i] = i + 1;
+            invoiceNft.finalizeInvoice(invoiceId);
+            invoiceIds[i] = invoiceId;
         }
         vm.stopPrank();
         
-        vm.prank(exporter1);
+        // Admin creates pool
+        vm.prank(admin);
         uint256 poolId = poolNft.createPool(
             "Test Pool",
             invoiceIds
         );
+        
+        // Finalize pool to enable fundraising
+        vm.prank(admin);
+        poolNft.finalizePool(poolId);
         
         return poolId;
     }

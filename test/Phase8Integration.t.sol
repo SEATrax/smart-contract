@@ -76,11 +76,11 @@ contract Phase8IntegrationTest is Test {
         );
 
         // Grant roles
-        accessControl.grantRole(accessControl.EXPORTER_ROLE(), exporter1);
-        accessControl.grantRole(accessControl.EXPORTER_ROLE(), exporter2);
-        accessControl.grantRole(accessControl.INVESTOR_ROLE(), investor1);
-        accessControl.grantRole(accessControl.INVESTOR_ROLE(), investor2);
-        accessControl.grantRole(accessControl.INVESTOR_ROLE(), investor3);
+        accessControl.grantExporterRole(exporter1);
+        accessControl.grantExporterRole(exporter2);
+        accessControl.grantInvestorRole(investor1);
+        accessControl.grantInvestorRole(investor2);
+        accessControl.grantInvestorRole(investor3);
         
         // Authorize oracles
         paymentOracle.authorizeOracle(oracle1);
@@ -415,8 +415,11 @@ contract Phase8IntegrationTest is Test {
     }
 
     function _createTestPool(string memory name, uint256[] memory invoiceIds) internal returns (uint256) {
-        vm.prank(admin);
-        return poolNft.createPool(name, invoiceIds);
+        vm.startPrank(admin);
+        uint256 poolId = poolNft.createPool(name, invoiceIds);
+        poolNft.finalizePool(poolId);
+        vm.stopPrank();
+        return poolId;
     }
 
     function _performInvestments(uint256 poolId) internal returns (uint256) {
@@ -463,7 +466,7 @@ contract Phase8IntegrationTest is Test {
         vm.stopPrank();
     }
 
-    function _validateAnalyticsData(uint256 poolId, uint256 expectedInvestment) internal {
+    function _validateAnalyticsData(uint256 poolId, uint256 /* expectedInvestment */) internal {
         // Test platform metrics
         PlatformAnalytics.PlatformMetrics memory metrics = analytics.getPlatformMetrics();
         
