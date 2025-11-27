@@ -288,16 +288,16 @@ contract PoolFundingManager {
         onlyAdmin
         validPoolId(poolId)
     {
+        // Check if already distributed first (more specific error)
+        if (poolProfitsDistributed[poolId]) {
+            revert AlreadyDistributed(poolId);
+        }
+        
         PoolNFT.Pool memory pool = POOL_NFT.getPool(poolId);
         
         // Validate pool is ready for profit distribution
         if (pool.status != PoolNFT.PoolStatus.Settling) {
             revert PoolNotSettled(poolId);
-        }
-        
-        // Check if already distributed
-        if (poolProfitsDistributed[poolId]) {
-            revert AlreadyDistributed(poolId);
         }
         
         uint256 totalInvestment = poolTotalInvestment[poolId];

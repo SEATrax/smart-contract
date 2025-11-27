@@ -42,12 +42,12 @@ contract PoolFundingManagerTest is Test {
     string constant IMPORTER_COMPANY = "Test Importer Inc";
     string constant POOL_NAME = "Q4 2024 Test Pool";
     
-    uint256 constant SHIPPING_AMOUNT = 100000e18; // $100k
-    uint256 constant LOAN_AMOUNT = 70000e18; // $70k
+    uint256 constant SHIPPING_AMOUNT = 5000e18; // $5k
+    uint256 constant LOAN_AMOUNT = 3500e18; // $3.5k
     uint256 constant SHIPPING_DATE = 1735689600; // Jan 1, 2025
     
     uint256 constant MIN_INVESTMENT = 1000e18; // $1k
-    uint256 constant LARGE_INVESTMENT = 50000e18; // $50k
+    uint256 constant LARGE_INVESTMENT = 2500e18; // $2.5k
     
     // Test data
     uint256[] internal sampleInvoiceIds;
@@ -99,8 +99,8 @@ contract PoolFundingManagerTest is Test {
         uint256 invoice2 = invoiceNft.mintInvoice(
             "Another Corp",
             IMPORTER_COMPANY,
-            80000e18,
-            50000e18,
+            4000e18,
+            2800e18,
             SHIPPING_DATE + 1000
         );
         invoiceNft.finalizeInvoice(invoice2);
@@ -110,8 +110,8 @@ contract PoolFundingManagerTest is Test {
         uint256 invoice3 = invoiceNft.mintInvoice(
             "Third Corp",
             IMPORTER_COMPANY,
-            60000e18,
-            40000e18,
+            3000e18,
+            2100e18,
             SHIPPING_DATE + 2000
         );
         invoiceNft.finalizeInvoice(invoice3);
@@ -286,8 +286,8 @@ contract PoolFundingManagerTest is Test {
         uint256 newInvoice = invoiceNft.mintInvoice(
             "New Corp",
             "New Importer",
-            50000e18,
-            30000e18,
+            2500e18,
+            1750e18,
             SHIPPING_DATE + 5000
         );
         invoiceNft.finalizeInvoice(newInvoice);
@@ -317,7 +317,7 @@ contract PoolFundingManagerTest is Test {
     function test_AllocateFundsToInvoices_Success() public {
         // First, invest in the pool  
         vm.startPrank(investor1);
-        uint256 investment = 140000e18; // Enough to cover total loan amount (160k)
+        uint256 investment = 8400e18; // Exactly matches total loan amount
         fundingManager.investInPool(samplePoolId, investment);
         vm.stopPrank();
         
@@ -381,8 +381,8 @@ contract PoolFundingManagerTest is Test {
     // ================================
     
     function test_DistributeProfits_Success() public {
-        // Setup: invest, allocate, complete pool
-        _setupCompletedPool();
+        // Setup: invest, allocate, settle pool (but don't distribute profits yet)
+        _setupSettlingPool();
         
         vm.startPrank(admin);
         
@@ -410,7 +410,7 @@ contract PoolFundingManagerTest is Test {
     function test_DistributeProfits_RevertNotCompleted() public {
         // Setup investment without completing the pool
         vm.startPrank(investor1);
-        fundingManager.investInPool(samplePoolId, 140000e18);
+        fundingManager.investInPool(samplePoolId, 8400e18);
         vm.stopPrank();
         
         vm.startPrank(admin);
@@ -423,11 +423,12 @@ contract PoolFundingManagerTest is Test {
     }
     
     function test_DistributeProfits_RevertAlreadyDistributed() public {
-        _setupCompletedPool();
+        _setupSettlingPool();
         
         vm.startPrank(admin);
         fundingManager.distributeProfits(samplePoolId);
         
+        // Now with the fixed contract, it should properly check AlreadyDistributed first
         vm.expectRevert(abi.encodeWithSelector(
             PoolFundingManager.AlreadyDistributed.selector,
             samplePoolId
@@ -441,15 +442,10 @@ contract PoolFundingManagerTest is Test {
     // ================================
     
     function test_ClaimInvestorReturns_Success() public {
-        uint256 investment = 50000e18;
+        uint256 investment = 8400e18;
         _setupCompletedPoolWithInvestment(investor1, investment);
         
-        // Distribute profits first
-        vm.startPrank(admin);
-        fundingManager.distributeProfits(samplePoolId);
-        vm.stopPrank();
-        
-        // Claim returns
+        // Claim returns (profits already distributed by _setupCompletedPoolWithInvestment)
         vm.startPrank(investor1);
         
         fundingManager.claimInvestorReturns(samplePoolId);
@@ -461,16 +457,13 @@ contract PoolFundingManagerTest is Test {
     }
     
     function test_ClaimInvestorReturns_RevertNoInvestment() public {
-        _setupCompletedPool();
+        _setupCompletedPool(); // investor1 invests here
         
-        vm.startPrank(admin);
-        fundingManager.distributeProfits(samplePoolId);
-        vm.stopPrank();
-        
-        vm.startPrank(investor1); // Never invested
+        // Test with investor2 who never invested
+        vm.startPrank(investor2);
         vm.expectRevert(abi.encodeWithSelector(
             PoolFundingManager.NoInvestment.selector,
-            investor1,
+            investor2,
             samplePoolId
         ));
         fundingManager.claimInvestorReturns(samplePoolId);
@@ -479,7 +472,7 @@ contract PoolFundingManagerTest is Test {
     
     function test_ClaimInvestorReturns_RevertNotDistributed() public {
         vm.startPrank(investor1);
-        fundingManager.investInPool(samplePoolId, 50000e18);
+        fundingManager.investInPool(samplePoolId, 8400e18);
         vm.stopPrank();
         
         vm.startPrank(investor1);
@@ -560,7 +553,7 @@ contract PoolFundingManagerTest is Test {
     
     function test_GasUsage_AllocateFunds() public {
         vm.startPrank(investor1);
-        fundingManager.investInPool(samplePoolId, 140000e18);
+        fundingManager.investInPool(samplePoolId, 8400e18);
         vm.stopPrank();
         
         vm.startPrank(admin);
@@ -580,7 +573,11 @@ contract PoolFundingManagerTest is Test {
     // ================================
     
     function _setupCompletedPool() internal {
-        _setupCompletedPoolWithInvestment(investor1, 140000e18);
+        _setupCompletedPoolWithInvestment(investor1, 8400e18);
+    }
+    
+    function _setupSettlingPool() internal {
+        _setupSettlingPoolWithInvestment(investor1, 8400e18);
     }
     
     function _setupCompletedPoolWithInvestment(address investor, uint256 investment) internal {
@@ -602,10 +599,36 @@ contract PoolFundingManagerTest is Test {
             }
         }
         
-        // Mark pool as settling and completed
+        // Mark pool as settling and distribute profits
         poolNft.markPoolSettling(samplePoolId);
-        uint256 totalDistributed = investment + 10000e18; // Principal + profit
-        poolNft.markPoolCompleted(samplePoolId, totalDistributed);
+        
+        // Distribute profits - this will automatically call markPoolCompleted()
+        fundingManager.distributeProfits(samplePoolId);
+        
+        vm.stopPrank();
+    }
+    
+    function _setupSettlingPoolWithInvestment(address investor, uint256 investment) internal {
+        // Invest in pool
+        vm.startPrank(investor);
+        fundingManager.investInPool(samplePoolId, investment);
+        vm.stopPrank();
+        
+        // Allocate funds
+        vm.startPrank(admin);
+        fundingManager.allocateFundsToInvoices(samplePoolId);
+        
+        // Mark all invoices as paid
+        for (uint256 i = 0; i < sampleInvoiceIds.length; i++) {
+            // First fund each invoice to make it eligible for payment confirmation
+            InvoiceNFT.Invoice memory invoice = invoiceNft.getInvoice(sampleInvoiceIds[i]);
+            if (invoice.amountInvested > 0) { // Only if already funded by allocation
+                invoiceNft.confirmPayment(sampleInvoiceIds[i]);
+            }
+        }
+        
+        // Mark pool as settling but don't distribute profits yet
+        poolNft.markPoolSettling(samplePoolId);
         
         vm.stopPrank();
     }
