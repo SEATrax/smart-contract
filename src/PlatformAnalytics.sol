@@ -57,6 +57,7 @@ contract PlatformAnalytics {
         uint256 activePools;                 // Currently active pools
         uint256 uniqueInvestors;             // Number of unique investors
         uint256 uniqueExporters;             // Number of unique exporters
+        uint256 completedInvoices;           // Total completed invoices
     }
 
     /// @notice Individual investor portfolio metrics
@@ -267,6 +268,7 @@ contract PlatformAnalytics {
         // Update financial metrics
         metrics.totalPlatformFees = _calculateTotalPlatformFees();
         metrics.totalInvestorReturns = _calculateTotalInvestorReturns();
+        metrics.completedInvoices = _calculateTotalCompletedInvoices();
         
         lastUpdateTimestamp["platform"] = block.timestamp;
         
@@ -946,6 +948,29 @@ contract PlatformAnalytics {
     function _calculateCompletedInvoices(uint256 /* dayTimestamp */) internal pure returns (uint256) {
         // Count invoices completed on specific day
         return 0; // Placeholder - would need event filtering
+    }
+
+    /**
+     * @notice Calculate total completed invoices across all pools
+     * @return Total number of completed invoices
+     */
+    function _calculateTotalCompletedInvoices() internal view returns (uint256) {
+        uint256 totalCompleted = 0;
+        uint256 totalPools = POOL_NFT.totalSupply();
+        
+        for (uint256 i = 1; i <= totalPools; i++) {
+            try POOL_NFT.getPool(i) returns (PoolNFT.Pool memory pool) {
+                if (pool.status == PoolNFT.PoolStatus.Completed) {
+                    // Count all invoices in completed pools as completed
+                    totalCompleted += pool.invoiceCount;
+                }
+            } catch {
+                // Skip invalid pool IDs
+                continue;
+            }
+        }
+        
+        return totalCompleted;
     }
 
     function _calculateCurrentAverageRoi() internal view returns (uint256) {
