@@ -29,8 +29,8 @@ contract Phase7AnalyticsSimpleTest is Test {
     address public exporter1 = makeAddr("exporter1");
     address public buyer1 = makeAddr("buyer1");
 
-    uint256 public constant INVESTMENT_AMOUNT = 100000e18; // 100k tokens (above MIN_INVESTMENT)
-    uint256 public constant INVOICE_AMOUNT = 200000e18;   // 200k tokens
+    uint256 public constant INVESTMENT_AMOUNT = 1000e18; // 1k tokens (minimum investment)
+    uint256 public constant INVOICE_AMOUNT = 1000e18;   // 1k tokens
 
     function setUp() public {
         accessControl = new PlatformAccessControl(admin);
@@ -90,6 +90,10 @@ contract Phase7AnalyticsSimpleTest is Test {
         vm.prank(investor2);
         fundingManager.investInPool(poolId, INVESTMENT_AMOUNT * 2);
         
+        // Allocate funds to make pool funded
+        vm.prank(admin);
+        fundingManager.allocateFundsToInvoices(poolId);
+        
         // Update analytics
         vm.prank(admin);
         analytics.updatePlatformMetrics();
@@ -124,10 +128,17 @@ contract Phase7AnalyticsSimpleTest is Test {
         uint256 pool2 = _createTestPool();
         
         vm.prank(investor1);
-        fundingManager.investInPool(pool1, INVESTMENT_AMOUNT);
+        fundingManager.investInPool(pool1, INVESTMENT_AMOUNT * 2); // 2k investment for 1.68k required
         
         vm.prank(investor2);
-        fundingManager.investInPool(pool2, INVESTMENT_AMOUNT);
+        fundingManager.investInPool(pool2, INVESTMENT_AMOUNT * 2); // 2k investment for 1.68k required
+        
+        // Allocate funds to pools
+        vm.prank(admin);
+        fundingManager.allocateFundsToInvoices(pool1);
+        
+        vm.prank(admin);
+        fundingManager.allocateFundsToInvoices(pool2);
         
         // Update all metrics
         vm.prank(admin);
@@ -146,7 +157,7 @@ contract Phase7AnalyticsSimpleTest is Test {
         ) = analytics.getInvestorPoolBreakdown(investor1);
         
         assertEq(poolIds.length, 1);
-        assertEq(investments[0], INVESTMENT_AMOUNT);
+        assertEq(investments[0], INVESTMENT_AMOUNT * 2); // We invested 2x amount
         // Touch variables to avoid warnings
         if (investorReturns.length > 0) investorReturns;
         if (rois.length > 0) rois;
@@ -171,9 +182,16 @@ contract Phase7AnalyticsSimpleTest is Test {
         vm.prank(admin);
         analytics.createHistoricalSnapshot();
         
-        // Add investment and advance time
+        // Add investments and advance time
         vm.prank(investor1);
         fundingManager.investInPool(poolId, INVESTMENT_AMOUNT);
+        
+        vm.prank(investor2);
+        fundingManager.investInPool(poolId, INVESTMENT_AMOUNT);
+        
+        // Allocate funds
+        vm.prank(admin);
+        fundingManager.allocateFundsToInvoices(poolId);
         
         vm.warp(block.timestamp + 1 days);
         
@@ -181,7 +199,7 @@ contract Phase7AnalyticsSimpleTest is Test {
         analytics.createHistoricalSnapshot();
         
         // Test historical trends
-        uint256 fromTime = block.timestamp - 2 days;
+        uint256 fromTime = 0; // Start from beginning
         uint256 toTime = block.timestamp;
         
         (
