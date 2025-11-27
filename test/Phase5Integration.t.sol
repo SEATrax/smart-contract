@@ -127,10 +127,10 @@ contract Phase5Integration is Test {
             500e18,
             1000e18
         ));
-        fundingManager.investInPool(poolId, 1500e18); // Above minimum
+        fundingManager.investInPool(poolId, 500e18); // Below minimum
         
         // Test successful investment
-        fundingManager.investInPool(poolId, 5000e18); // Above minimum
+        fundingManager.investInPool(poolId, 1500e18); // Above minimum
         vm.stopPrank();
         
         console2.log("[OK] Investment validation working");
