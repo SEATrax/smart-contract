@@ -36,26 +36,48 @@ contract DeployLocalScript is DeployScript {
     }
 
     function run() public override {
-        // Deploy all contracts
-        super.run();
+        // Get deployer key and start broadcast
+        uint256 deployerPrivateKey = vm.envUint("PRIVATE_KEY");
+        vm.startBroadcast(deployerPrivateKey);
         
-        // Add local-specific initialization
+        console.log("\nStarting deployment process...");
+        
+        // Deploy all contracts using the parent logic
+        deployAllContracts();
+        
+        // Add local-specific initialization (still within broadcast)
         console.log("\n=== LOCAL ENVIRONMENT SETUP ===");
         setupTestEnvironment();
+        
+        vm.stopBroadcast();
+        
+        // Print deployment summary
+        logDeploymentSummary();
+        
+        console.log("=====================");
+    }
+    
+    function deployAllContracts() internal {
+        // Deploy contracts in order
+        deployAccessControl();
+        deployInvoiceNFT();
+        deployPoolNFT();
+        deployPoolFundingManager();
+        deployPaymentOracle();
+        deployPlatformAnalytics();
+        initializeContracts();
     }
 
     function setupTestEnvironment() internal {
         console.log("Setting up test environment with demo data...");
         
-        PlatformAccessControl accessControlContract = PlatformAccessControl(accessControl);
-        
-        // Grant additional roles for testing
+        // Grant additional roles for testing (using the stored contract addresses)
         console.log("Granting additional test roles...");
-        accessControlContract.grantExporterRole(testExporter2);
-        accessControlContract.grantInvestorRole(testInvestor2);
+        console.log("Granting EXPORTER_ROLE to:", testExporter2);
+        PlatformAccessControl(accessControl).grantExporterRole(testExporter2);
         
-        // Authorize additional oracle for testing
-        PaymentOracle(paymentOracle).authorizeOracle(testOracle);
+        console.log("Granting INVESTOR_ROLE to:", testInvestor2);
+        PlatformAccessControl(accessControl).grantInvestorRole(testInvestor2);
         
         console.log("[OK] Test environment setup completed");
         console.log("");
