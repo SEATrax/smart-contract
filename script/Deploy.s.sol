@@ -10,6 +10,13 @@ import {PoolNFT} from "../src/PoolNFT.sol";
 import {PoolFundingManager} from "../src/PoolFundingManager.sol";
 import {PaymentOracle} from "../src/PaymentOracle.sol";
 import {PlatformAnalytics} from "../src/PlatformAnalytics.sol";
+// Import all contracts
+import {PlatformAccessControl} from "../src/AccessControl.sol";
+import {InvoiceNFT} from "../src/InvoiceNFT.sol";
+import {PoolNFT} from "../src/PoolNFT.sol";
+import {PoolFundingManager} from "../src/PoolFundingManager.sol";
+import {PaymentOracle} from "../src/PaymentOracle.sol";
+import {PlatformAnalytics} from "../src/PlatformAnalytics.sol";
 
 /**
  * @title Deploy Script for Export-Import Funding Platform
