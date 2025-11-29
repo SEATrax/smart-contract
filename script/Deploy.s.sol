@@ -37,8 +37,8 @@ contract DeployScript is Script {
 
     function setUp() public virtual {
         // Get configuration from environment (fallback to msg.sender for local)
-        platformAdmin = msg.sender; // Will be overridden by PLATFORM_ADMIN if set
-        try vm.envAddress("PLATFORM_ADMIN") returns (address addr) {
+        platformAdmin = msg.sender; // Will be overridden by ADMIN_ADDRESS if set
+        try vm.envAddress("ADMIN_ADDRESS") returns (address addr) {
             platformAdmin = addr;
         } catch {}
         
