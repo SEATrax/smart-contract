@@ -10,6 +10,13 @@ import {PoolNFT} from "../src/PoolNFT.sol";
 import {PoolFundingManager} from "../src/PoolFundingManager.sol";
 import {PaymentOracle} from "../src/PaymentOracle.sol";
 import {PlatformAnalytics} from "../src/PlatformAnalytics.sol";
+// Import all contracts
+import {PlatformAccessControl} from "../src/AccessControl.sol";
+import {InvoiceNFT} from "../src/InvoiceNFT.sol";
+import {PoolNFT} from "../src/PoolNFT.sol";
+import {PoolFundingManager} from "../src/PoolFundingManager.sol";
+import {PaymentOracle} from "../src/PaymentOracle.sol";
+import {PlatformAnalytics} from "../src/PlatformAnalytics.sol";
 
 /**
  * @title Deploy Script for Export-Import Funding Platform
@@ -37,8 +44,8 @@ contract DeployScript is Script {
 
     function setUp() public virtual {
         // Get configuration from environment (fallback to msg.sender for local)
-        platformAdmin = msg.sender; // Will be overridden by PLATFORM_ADMIN if set
-        try vm.envAddress("PLATFORM_ADMIN") returns (address addr) {
+        platformAdmin = msg.sender; // Will be overridden by ADMIN_ADDRESS if set
+        try vm.envAddress("ADMIN_ADDRESS") returns (address addr) {
             platformAdmin = addr;
         } catch {}
         
